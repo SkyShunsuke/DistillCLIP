@@ -1,0 +1,15 @@
+python src/generate_captions.py \
+    --dataset stl10 \
+    --data_path data/stl10_images \
+    --batch_size 4 \
+    --image_size 224 \
+    --llm_type gpt-4o-mini \
+    --detail_level low \
+    --dotenv_path .env \
+    --num_captions_per_image 1 \
+    --temperature 1.0 \
+    --top_k 50 \
+    --max_retry 10 \
+    --context_length 77 \
+    --output_dir caption_data \
+    --caption_file stl10_train_labeled_gpt4omini_low.json \
