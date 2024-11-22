@@ -2,33 +2,152 @@ export CUDA_VISIBLE_DEVICES=1,2,3,4,5 # ,2,3,4,5
 export MASTER_ADDR=127.0.0.1
 export MASTER_PORT=29500
 
-accelerate launch --num_processes 5 src/generate_dataset.py \
-    --generation_type txt2img \
-    --num_samples 8 \
-    --model_name stabilityai/stable-diffusion-2-1 \
-    --num_steps 20 \
-    --guidance_scale 9 \
-    --dataset stl10 \
-    --data_path data \
-    --image_size 96 \
-    --device cuda \
-    --output_dir syn_data \
-    --batch_size 5 \
-    --new_dataset_name stl10_classtxi_s9_n20_x8_rev \
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 1 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data/stl10_images \
+#     --caption_path caption_data/train_stl10_train_labeled_gpt4omini_low.json \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 50 \
+#     --new_dataset_name stl10_captiontxi_s9_n20_x1 \
 
 accelerate launch --num_processes 5 src/generate_dataset.py \
-    --generation_type txt2img \
-    --num_samples 16 \
-    --model_name stabilityai/stable-diffusion-2-1 \
+    --generation_type unclip \
+    --num_samples 2 \
+    --model_name stabilityai/stable-diffusion-2-1-unclip \
     --num_steps 20 \
     --guidance_scale 9 \
     --dataset stl10 \
-    --data_path data \
+    --data_path data/stl10_images \
+    --image_size 96 \
+    --device cuda \
+    --output_dir syn_data \
+    --batch_size 25 \
+    --new_dataset_name stl10_imagetxi_s9_n20_x2 \
+
+accelerate launch --num_processes 5 src/generate_dataset.py \
+    --generation_type unclip \
+    --num_samples 4 \
+    --model_name stabilityai/stable-diffusion-2-1-unclip \
+    --num_steps 20 \
+    --guidance_scale 9 \
+    --dataset stl10 \
+    --data_path data/stl10_images \
+    --image_size 96 \
+    --device cuda \
+    --output_dir syn_data \
+    --batch_size 15 \
+    --new_dataset_name stl10_imagetxi_s9_n20_x4 \
+
+accelerate launch --num_processes 5 src/generate_dataset.py \
+    --generation_type unclip \
+    --num_samples 8 \
+    --model_name stabilityai/stable-diffusion-2-1-unclip \
+    --num_steps 20 \
+    --guidance_scale 9 \
+    --dataset stl10 \
+    --data_path data/stl10_images \
     --image_size 96 \
     --device cuda \
     --output_dir syn_data \
     --batch_size 5 \
-    --new_dataset_name stl10_classtxi_s9_n20_x16_rev \
+    --new_dataset_name stl10_imagetxi_s9_n20_x8 \
+
+accelerate launch --num_processes 5 src/generate_dataset.py \
+    --generation_type unclip \
+    --num_samples 16 \
+    --model_name stabilityai/stable-diffusion-2-1-unclip \
+    --num_steps 20 \
+    --guidance_scale 9 \
+    --dataset stl10 \
+    --data_path data/stl10_images \
+    --image_size 96 \
+    --device cuda \
+    --output_dir syn_data \
+    --batch_size 5 \
+    --new_dataset_name stl10_imagetxi_s9_n20_x16 \
+
+
+
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 2 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data/stl10_images \
+#     --caption_path caption_data/train_stl10_train_labeled_gpt4omini_low.json \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 25 \
+#     --new_dataset_name stl10_captiontxi_s9_n20_x2 \
+
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 4 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data/stl10_images \
+#     --caption_path caption_data/train_stl10_train_labeled_gpt4omini_low.json \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 15 \
+#     --new_dataset_name stl10_captiontxi_s9_n20_x4 \
+
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 8 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data/stl10_images \
+#     --caption_path caption_data/train_stl10_train_labeled_gpt4omini_low.json \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 10 \
+#     --new_dataset_name stl10_captiontxi_s9_n20_x8 \
+
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 16 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data/stl10_images \
+#     --caption_path caption_data/train_stl10_train_labeled_gpt4omini_low.json \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 5 \
+#     --new_dataset_name stl10_captiontxi_s9_n20_x16 \
+
+# accelerate launch --num_processes 5 src/generate_dataset.py \
+#     --generation_type txt2img \
+#     --num_samples 16 \
+#     --model_name stabilityai/stable-diffusion-2-1 \
+#     --num_steps 20 \
+#     --guidance_scale 9 \
+#     --dataset stl10 \
+#     --data_path data \
+#     --image_size 96 \
+#     --device cuda \
+#     --output_dir syn_data \
+#     --batch_size 5 \
+#     --new_dataset_name stl10_classtxi_s9_n20_x16_rev \
 
 # accelerate launch --num_processes 5 src/generate_dataset.py \
 #     --generation_type txt2img \

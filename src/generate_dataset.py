@@ -23,8 +23,8 @@ import warnings
 from PIL import Image
 warnings.filterwarnings("ignore")
 
-from dataset import PetsDataset, StanfordCarsDataset, Flowers102Dataset, Caltech101Dataset, STL10Dataset
-from sampling import ddim_sampling, unclip_sampling, text_sampling
+from dataset import PetsDataset, StanfordCarsDataset, Flowers102Dataset, Caltech101Dataset, STL10Dataset, STL10DatasetFolder
+from sampling import ddim_sampling, unclip_sampling, text_sampling, textual_inversion
 
 def get_diffusion_pipe(model_name, device):    
     print(f"Loading model: {model_name}")
@@ -74,6 +74,7 @@ def generate(dist, dataloader, pipe, args, hdf5_path, split, prompt=""):
         paths = np.array(batch["path"])
         labels = np.array(batch["label"])
         captions = np.array(batch["caption"])        
+        base_prompt = dataloader.dataset.base_prompt
         with dist.split_between_processes(list(range(len(images)))) as idxs:
             assert len(idxs) == batch_size_on_node, f"Batch size on node: {len(idxs)} should be equal to {batch_size_on_node}"
             current_process_id = dist.process_index
@@ -119,6 +120,18 @@ def generate(dist, dataloader, pipe, args, hdf5_path, split, prompt=""):
                     img_size=args.image_size,
                     prefix=f"[{split}] {i}/{len(dataloader)}",
                 )
+            elif args.generation_type == "inversion":
+                sample = textual_inversion(
+                    prompt_embeds=args.embeds_path, 
+                    pipe=pipe,
+                    captions=captions[idxs],
+                    num_inference_steps=args.num_steps,
+                    num_samples=args.num_samples,
+                    guidance_scale=args.guidance_scale,
+                    img_size=args.image_size,
+                    prefix=f"[{split}] {i}/{len(dataloader)}",
+                    base_prompt=base_prompt,
+                )
             else:
                 raise NotImplementedError(f"Invalid generation type: {args.generation_type}")
             # sample = samples[0]
@@ -151,6 +164,7 @@ def main():
     
     parser.add_argument("--dataset", type=str, default="pets", help="Dataset name")
     parser.add_argument("--data_path", type=str, default="data", help="Directory to save generated samples")
+    parser.add_argument("--caption_path", type=str, default=None, help="Path to the caption file")
     parser.add_argument("--with_test", action="store_true", help="Generate samples for test set")
     parser.add_argument("--image_size", type=int, default=256, help="Image size")
     parser.add_argument("--device", type=str, default="cuda", help="Device to run the model")
@@ -256,9 +270,17 @@ def main():
         else:
             stl_transform = pipe.feature_extractor
         dataset_config["transform"] = stl_transform
-        train_dataset = STL10Dataset(**dataset_config)
-        dataset_config["train"] = False
-        val_dataset = STL10Dataset(**dataset_config)
+
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = STL10DatasetFolder(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = STL10DatasetFolder(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = STL10DatasetFolder(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = STL10DatasetFolder(**dataset_config)
     else:
         raise ValueError(f"Invalid dataset: {args.dataset}")
     

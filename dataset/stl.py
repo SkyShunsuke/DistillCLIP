@@ -29,13 +29,15 @@ LABEL_TO_CLASSNAME = {
     9: "truck",
     -1: "unlabeled",
 }
+STL_CLASSES = ["airplane", "bird", "car", "cat", "deer", "dog", "horse", "monkey", "ship", "truck"]
 
 class STL10Dataset(Dataset):
-    def __init__(self, root, transform=None, download=False, train=True, with_unlabeled=False):
+    def __init__(self, root, transform=None, download=False, train=True, with_unlabeled=False, base_prompt="A photo of a "):
         self.root = root
         self.transform = transform
         self.train = train
         self.with_unlabeled = with_unlabeled
+        self.base_prompt = base_prompt
 
         if download:
             self.download()
@@ -51,7 +53,7 @@ class STL10Dataset(Dataset):
 
         print(f"Number of samples in {split} set: {len(self.dataset)}")
 
-        self.classes = self.dataset.classes
+        self.classes = STL_CLASSES
         self.num_classes = len(self.classes)
 
     def download(self):
@@ -72,7 +74,7 @@ class STL10Dataset(Dataset):
             "index": index,
             "image": image,
             "label": torch.tensor(label),
-            "caption": f"A photo of {LABEL_TO_CLASSNAME[label]}",
+            "caption": f"{self.base_prompt}{LABEL_TO_CLASSNAME[label]}",
             "path": pseudo_path,
         }
 
@@ -89,6 +91,9 @@ class STL10DatasetLMDB(Dataset):
             self.split = "test"
         
         self.images, self.labels, self.real_paths, self.captions = self.load_data()
+        
+        self.classes = STL_CLASSES
+        self.num_classes = len(self.classes)
     
     def load_data(self):
         with h5py.File(self.hdf5_file, 'r') as hdf:
@@ -139,7 +144,7 @@ class STL10DatasetLMDB(Dataset):
         }
 
 class STL10DatasetFolder(Dataset):
-    def __init__(self, root, transform=None, train=True, download=False, with_unlabeled=False, caption_file=None):
+    def __init__(self, root, transform=None, train=True, download=False, with_unlabeled=False, caption_file=None, base_prompt="A photo of a "):
         """
         STL10DatasetFolder with support for 'train', 'test', and 'train+unlabeled' splits.
 
@@ -154,6 +159,7 @@ class STL10DatasetFolder(Dataset):
         self.root = root
         self.transform = transform
         self.caption_file = caption_file
+        self.base_prompt = base_prompt
 
         # Determine split type
         if train:
@@ -180,6 +186,9 @@ class STL10DatasetFolder(Dataset):
         if self.caption_file is not None:
             with open(self.caption_file, "r") as f:
                 self.captions = json.load(f)
+        
+        self.classes = STL_CLASSES
+        self.num_classes = len(self.labels_df["label"].unique())
 
     def __len__(self):
         return len(self.labels_df)
@@ -208,7 +217,7 @@ class STL10DatasetFolder(Dataset):
         if self.caption_file is not None:
             caption = self.captions[image_path]
         else:
-            caption = f"A photo of {LABEL_TO_CLASSNAME[label]}"
+            caption = f"{self.base_prompt}{LABEL_TO_CLASSNAME[label]}"
             
         return {
             "index": row["index"],
@@ -224,7 +233,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
     ])
 
-    ## For real
+    # ## For real
     # dataset = STL10Dataset(root="data", transform=transform, download=True, train=True, with_unlabeled=True)
     # print(len(dataset))
     # print(dataset[-1]["image"].size())
@@ -237,12 +246,15 @@ if __name__ == "__main__":
     # torchvision.utils.save_image(img, "stl10_example.png")
     
     ## For synthetic
-    # dataset = STL10DatasetLMDB(root="/home/haselab/projects/sakai/DistillCLIP/syn_data/txt2img_stl10_classtxi_s9_n20_x16_rev.hdf5", transform=transform, train=True, download=False, with_unlabeled=False)
-    # # save image of the first sample in each class
-    # for i in range(10):
-    #     idx = np.where(np.array(dataset.labels) == i)[0][0]
-    #     img = dataset[idx]["image"]
-    #     torchvision.utils.save_image(img, f"stl10_example_{i}.png")
+    dataset = STL10DatasetLMDB(root="/home/haselab/projects/sakai/DistillCLIP/syn_data/unclip_stl10_imagetxi_s9_n20_x1.hdf5", transform=transform, train=True, download=False, with_unlabeled=False)
+    # save image of the first sample in each class
+    for i in range(10):
+        idx = np.where(np.array(dataset.labels) == i)[0][0]
+        img = dataset[idx]["image"]
+        print(dataset[idx]["caption"])
+        print(dataset[idx]["label"])
+        print(dataset[idx]["path"])
+        torchvision.utils.save_image(img, f"stl10_example_{i}.png")
     
     
     ## For folder dataset

@@ -156,24 +156,28 @@ def text_sampling(
     return images  # (B, C, H, W)
     
 
-# def clscaptoin_sampling(
-#     pipe,
-#     clsname: str,
-#     num_inference_steps: int,
-#     batch_size: int,
-#     device: str,
-#     num_samples: int=1,
-#     guidance_scale: float=3.5,
-#     llm_type: str=""
-#     output_type: str="image",
-#     prefix="",
-#     height: int=None,
-#     width: int=None,
-# ) -> np.ndarray:
-#     # Generate captions from classname
-#     generate_captions(
-        
-#     )
+def textual_inversion(
+    embeds_path: str,
+    pipe, 
+    prompts: List[str],
+    num_inference_steps: int,
+    num_samples: int=1,
+    guidance_scale: float=9,    
+    img_size: int=224,
+    prefix="",
+    base_prompt: str=None,
+):
+    # Load embeddings from file
+    prompt_dict = torch.load(embeds_path)
+    num_embeds_per_prompt = prompt_dict["num_embeds_per_prompt"]
+    base_prompt = base_prompt if base_prompt else prompt_dict["base_prompt"]
+    embedding_type = prompt_dict["embedding_type"]
+    prompt_embeds = prompt_dict["prompt_embeds"]
+    
+    assert embedding_type in ["clip", "word"]    
+    
+    return 
+    
     
     
     
