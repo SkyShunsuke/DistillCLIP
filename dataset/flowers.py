@@ -6,7 +6,27 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.datasets.utils import download_url
 from PIL import Image
+import json
 import scipy.io
+
+FLOWERS102_CLASSES = [
+    "pink primrose", "hard-leaved pocket orchid", "canterbury bells", "sweet pea", "english marigold",
+    "tiger lily", "moon orchid", "bird of paradise", "monkshood", "globe thistle", "snapdragon", "colt's foot",
+    "king protea", "spear thistle", "yellow iris", "globe flower", "purple coneflower", "peruvian lily",
+    "balloon flower", "giant white arum lily", "fire lily", "pincushion flower", "fritillary", "red ginger",
+    "grape hyacinth", "corn poppy", "prince of wales feathers", "stemless gentian", "artichoke", "sweet william",
+    "carnation", "garden phlox", "love in the mist", "mexican aster", "alpine sea holly", "ruby-lipped cattleya",
+    "cape flower", "great masterwort", "siam tulip", "lenten rose", "barbeton daisy", "daffodil", "sword lily",
+    "poinsettia", "bolero deep blue", "wallflower", "marigold", "buttercup", "oxeye daisy", "common dandelion",
+    "petunia", "wild pansy", "primula", "sunflower", "pelargonium", "bishop of llandaff", "gaura", "geranium",
+    "orange dahlia", "pink-yellow dahlia", "cautleya spicata", "japanese anemone", "black-eyed susan",
+    "silverbush", "californian poppy", "osteospermum", "spring crocus", "bearded iris", "windflower",
+    "tree poppy", "gazania", "azalea", "water lily", "rose", "thorn apple", "morning glory", "passion flower",
+    "lotus", "toad lily", "anthurium", "frangipani", "clematis", "hibiscus", "columbine", "desert-rose",
+    "tree mallow", "magnolia", "cyclamen", "watercress", "canna lily", "hippeastrum", "bee balm", "ball moss",
+    "foxglove", "bougainvillea", "camellia", "mallow", "mexican petunia", "bromelia", "blanket flower",
+    "trumpet creeper", "blackberry lily"
+]
 
 class Flowers102Dataset(Dataset):
     base_url = "https://www.robots.ox.ac.uk/~vgg/data/flowers/102/"
@@ -16,15 +36,24 @@ class Flowers102Dataset(Dataset):
         "splits": "setid.mat"
     }
 
-    def __init__(self, root, transform=None, download=False, train=True):
+    def __init__(self, root, transform=None, download=False, train=True, caption_file=None, base_prompt="A photo of a "):
         self.root = os.path.join(root, "flowers")
         self.transform = transform
         self.split = 'train' if train else 'test'
+        self.caption_file = caption_file
+        self.base_prompt = base_prompt
 
         if download:
             self.download()
 
         self.images, self.labels = self.load_data()
+
+        if self.caption_file is not None:
+            with open(self.caption_file, "r") as f:
+                self.captions = json.load(f)
+                
+        self.classes = FLOWERS102_CLASSES
+        self.num_classes = len(self.classes)
 
     def download(self):
         os.makedirs(self.root, exist_ok=True)
@@ -75,12 +104,17 @@ class Flowers102Dataset(Dataset):
 
         if self.transform:
             image = self.transform(image)
-
+        
+        if self.caption_file is not None:
+            caption = self.captions[image_path]
+        else:
+            caption = f"{self.base_prompt}{FLOWERS102_CLASSES[label]}"
+            
         return {
             "index": index,
             "image": image,
             "label": torch.tensor(label),
-            "caption": str(label),
+            "caption": caption,
             "path": image_path
         }
     
@@ -137,7 +171,8 @@ class Flowers102DatasetLMDB(Dataset):
     
 
 if __name__ == "__main__":
-    dataset = Flowers102Dataset(root="data", download=True, split='train')
+    dataset = Flowers102Dataset(root="data", download=True, train=True)
+    test_dataset = Flowers102Dataset(root="data", download=True, train=False)
     print(f"Flowers102 dataset successfully loaded.")
     print(f"Number of images: {len(dataset)}")
     print(f"Number of classes: {dataset.num_classes}")

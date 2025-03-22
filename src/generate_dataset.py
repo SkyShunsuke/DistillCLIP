@@ -23,7 +23,8 @@ import warnings
 from PIL import Image
 warnings.filterwarnings("ignore")
 
-from dataset import PetsDataset, StanfordCarsDataset, Flowers102Dataset, Caltech101Dataset, STL10Dataset, STL10DatasetFolder
+from dataset import PetsDataset, StanfordCarsDataset, Flowers102Dataset, Caltech101Dataset, STL10Dataset, STL10DatasetFolder, \
+    SVHNDataset, ImageNetteDataset, EuroSATDataset, Food101Dataset
 from sampling import ddim_sampling, unclip_sampling, text_sampling, textual_inversion
 
 def get_diffusion_pipe(model_name, device):    
@@ -134,10 +135,7 @@ def generate(dist, dataloader, pipe, args, hdf5_path, split, prompt=""):
                 )
             else:
                 raise NotImplementedError(f"Invalid generation type: {args.generation_type}")
-            # sample = samples[0]
-            # import matplotlib.pyplot as plt
-            # plt.imsave(f"recon_{split}_{i}.png", sample)
-            # break
+
             for j, img in enumerate(samples):
                 img_idx = j // args.num_samples
                 sample_idx = j % args.num_samples
@@ -185,9 +183,9 @@ def main():
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     
     # set random seed
-    # np.random.seed(args.seed)
-    # random.seed(args.seed)
-    # torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
     config = vars(args)
     print(f"Config: {config}")
     
@@ -233,18 +231,27 @@ def main():
         val_dataset = StanfordCarsDataset(**dataset_config)
     elif "flowers" in args.dataset:
         if args.generation_type == "ddim":
-            flowers_transform = tfms.Compose(
+            imagenette_transform = tfms.Compose(
                 [
                     tfms.transforms.Resize((args.image_size, args.image_size)),
                     tfms.transforms.ToTensor(),
                 ]
             )
         else:
-            flowers_transform = pipe.feature_extractor
-        dataset_config["transform"] = flowers_transform
-        train_dataset = Flowers102Dataset(**dataset_config)
-        dataset_config["train"] = False
-        val_dataset = Flowers102Dataset(**dataset_config)
+            imagenette_transform = pipe.feature_extractor
+        dataset_config["transform"] = imagenette_transform
+        
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = Flowers102Dataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = Flowers102Dataset(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = Flowers102Dataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = Flowers102Dataset(**dataset_config)
+        
     elif "caltech" in args.dataset:
         if args.generation_type == "ddim":
             caltech_transform = tfms.Compose(
@@ -281,6 +288,94 @@ def main():
             train_dataset = STL10DatasetFolder(**dataset_config)
             dataset_config["train"] = False
             val_dataset = STL10DatasetFolder(**dataset_config)
+    elif "svhn" in args.dataset:
+        if args.generation_type == "ddim":
+            svhn_transform = tfms.Compose(
+                [
+                    tfms.transforms.Resize((args.image_size, args.image_size)),
+                    tfms.transforms.ToTensor(),
+                ]
+            )
+        else:
+            svhn_transform = pipe.feature_extractor
+        dataset_config["transform"] = svhn_transform
+        
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = SVHNDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = SVHNDataset(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = SVHNDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = SVHNDataset(**dataset_config)
+    elif "imagenette" in args.dataset:
+        if args.generation_type == "ddim":
+            imagenette_transform = tfms.Compose(
+                [
+                    tfms.transforms.Resize((args.image_size, args.image_size)),
+                    tfms.transforms.ToTensor(),
+                ]
+            )
+        else:
+            imagenette_transform = pipe.feature_extractor
+        dataset_config["transform"] = imagenette_transform
+        
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = ImageNetteDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = ImageNetteDataset(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = ImageNetteDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = ImageNetteDataset(**dataset_config)
+    elif "eurosat" in args.dataset:
+        if args.generation_type == "ddim":
+            eurosat_transform = tfms.Compose(
+                [
+                    tfms.transforms.Resize((args.image_size, args.image_size)),
+                    tfms.transforms.ToTensor(),
+                ]
+            )
+        else:
+            eurosat_transform = pipe.feature_extractor
+        dataset_config["transform"] = eurosat_transform
+        
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = EuroSATDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = EuroSATDataset(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = EuroSATDataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = EuroSATDataset(**dataset_config)
+    elif "food" in args.dataset:
+        if args.generation_type == "ddim":
+            food_transform = tfms.Compose(
+                [
+                    tfms.transforms.Resize((args.image_size, args.image_size)),
+                    tfms.transforms.ToTensor(),
+                ]
+            )
+        else:
+            food_transform = pipe.feature_extractor
+        dataset_config["transform"] = food_transform
+        
+        if args.caption_path is not None:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = Food101Dataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = Food101Dataset(**dataset_config)
+        else:
+            dataset_config["caption_file"] = args.caption_path
+            train_dataset = Food101Dataset(**dataset_config)
+            dataset_config["train"] = False
+            val_dataset = Food101Dataset(**dataset_config)
     else:
         raise ValueError(f"Invalid dataset: {args.dataset}")
     
